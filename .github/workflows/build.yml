@@ -1,0 +1,21 @@
+name: Build Cybersecurity Awareness Bot
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: windows-2019   # Older runner that has better .NET Framework support
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build Project
+      run: msbuild CybersecurityAwarenessBot.csproj /p:Configuration=Release /p:Platform="Any CPU" /verbosity:minimal
