@@ -40,8 +40,10 @@ Learning Outcomes
 - Enhancing console UI with colours, spacing, borders and delays
 - Input validation and graceful error handling
 
+Workflow Screenshot
+![Workflow](Screenshot(10).png)
 
 
 Author:Moloko Mothemela 
 Course:PROG6221 
-Part:1 Basic Chatbot Interaction with Voice Greeting & Image Display
+Part:1 Basic Chatbot Interaction with Voice Greeting & ASCII Display
