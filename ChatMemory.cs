@@ -1,4 +1,6 @@
-﻿using System;
+// Stores user data and conversation context for the chatbot.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
