@@ -1,0 +1,30 @@
+name: CI - Check Files Exist
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  check:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check Part 1 files exist
+      run: |
+        if (Test-Path "CybersecurityBot.cs") { Write-Host "Part 1 found - OK" } else { exit 1 }
+        if (Test-Path "Program.cs") { Write-Host "Part 1 found - OK" } else { exit 1 }
+        if (Test-Path "User.cs") { Write-Host "Part 1 found - OK" } else { exit 1 }
+    
+    - name: Check Part 2 folder exists
+      run: |
+        if (Test-Path "Part2-GUI") { Write-Host "Part 2 folder found - OK" } else { exit 1 }
+    
+    - name: Check Part 2 files exist
+      run: |
+        if (Test-Path "Part2-GUI/MainWindow.xaml") { Write-Host "Part 2 found - OK" } else { exit 1 }
+        if (Test-Path "Part2-GUI/MainWindow.xaml.cs") { Write-Host "Part 2 found - OK" } else { exit 1 }
+        if (Test-Path "Part2-GUI/ChatMemory.cs") { Write-Host "Part 2 found - OK" } else { exit 1 }
+    
+    - name: All checks passed
+      run: Write-Host "✅ All required files exist!"
