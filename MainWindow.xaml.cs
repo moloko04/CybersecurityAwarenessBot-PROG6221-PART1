@@ -216,7 +216,7 @@ namespace CybersecurityBot.GUI
 
             if (sentiment == "worried")
             {
-                AddBotMessage("It's completely understandable to feel that way. Let me share some tips to help you stay safe.");
+                AddBotMessage("It's completely understandable to feel that way. Let me share some tips to help you stay safe online.");
                 return;
             }
             else if (sentiment == "frustrated")
