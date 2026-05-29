@@ -8,14 +8,22 @@ on:
 
 jobs:
   build:
-    runs-on: windows-2019   # Older runner that has better .NET Framework support
+    runs-on: windows-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
+    
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
-
-    - name: Build Project
-      run: msbuild CybersecurityAwarenessBot.csproj /p:Configuration=Release /p:Platform="Any CPU" /verbosity:minimal
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    
+    - name: Build Part 1 (Console - .NET Framework)
+      run: msbuild Part1-Console/CybersecurityAwarenessBot.csproj /p:Configuration=Release /p:Platform="AnyCPU" /verbosity:minimal
+    
+    - name: Build Part 2 (WPF - .NET 8.0)
+      run: dotnet build Part2-GUI/CybersecurityBot.GUI.csproj --configuration Release
