@@ -1,0 +1,17 @@
+name: CI - Basic Check
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check repository has files
+      run: |
+        echo "Repository contains:"
+        ls -la
+        echo "✅ CI check passed!"
