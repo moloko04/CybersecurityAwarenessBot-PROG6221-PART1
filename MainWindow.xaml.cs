@@ -11,7 +11,7 @@ namespace CybersecurityBot.GUI
     {
         private ChatMemory memory = new ChatMemory();
         private Random random = new Random();
-        private string botName = "Cyber Bot";
+        private string botName = "CyberBot";
         private bool nameStored = false;
         private string historyFile = "History/chat_history.txt";
 
