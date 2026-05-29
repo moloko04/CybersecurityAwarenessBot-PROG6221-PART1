@@ -27,6 +27,7 @@ namespace CybersecurityBot.GUI
                     "Never reuse passwords on different websites.",
                     "Enable two-factor authentication (2FA) wherever possible.",
                     "Avoid using personal details like your birthday in passwords."
+                    "Consider using a password manager to generate and store strong passwords."
                 }
             },
             {
