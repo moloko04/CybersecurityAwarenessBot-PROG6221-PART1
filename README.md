@@ -97,6 +97,14 @@ Part 2
 - Adding memory and sentiment detection
 - Managing conversation flow with follow-up handling
 
+Part 3 - Full Cybersecurity Bot
+
+New Features:
+- Task Assistant with MySQL database
+- Cybersecurity Quiz with 12 questions
+- Activity Log to track all actions
+- NLP Simulation (keyword detection)
+
 Author
 Moloko Mothemela  
 Course: PROG6221  
