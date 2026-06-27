@@ -1,11 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-// ChatMemory.cs - Stores conversation data for the Cybersecurity Bot.
-// Used for remembering user name and tracking last topic discussed.
 
 namespace CybersecurityBot.GUI
 {
