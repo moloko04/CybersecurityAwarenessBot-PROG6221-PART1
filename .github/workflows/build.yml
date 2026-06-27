@@ -26,4 +26,4 @@ jobs:
       run: msbuild CybersecurityAwarenessBot.csproj /p:Configuration=Release /p:Platform="AnyCPU" /verbosity:minimal
     
     - name: Build Part 2 (WPF - .NET 8.0)
-      run: dotnet build Part2-GUI/CybersecurityBot.GUI.csproj --configuration Release
+      run: dotnet build CybersecurityBot.GUI.csproj --configuration Release
