@@ -3,20 +3,22 @@ using System.Collections.Generic;
 using System.IO;
 using System.Media;
 using System.Windows;
+using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
 namespace CybersecurityBot.GUI
 {
     public partial class MainWindow : Window
     {
         private ChatMemory memory = new ChatMemory();
         private Random random = new Random();
-        private string botName = "CyberBot";
+        private string botName = "Cyber Bot";
         private bool nameStored = false;
         private string historyFile = "History/chat_history.txt";
-
-
-
+        private DatabaseHelper dbHelper = new DatabaseHelper();
+        private QuizManager quizManager = new QuizManager();  
+        private List<string> activityLog = new List<string>();  
 
         private Dictionary<string, List<string>> cyberResponses = new Dictionary<string, List<string>>()
         {
@@ -27,7 +29,6 @@ namespace CybersecurityBot.GUI
                     "Never reuse passwords on different websites.",
                     "Enable two-factor authentication (2FA) wherever possible.",
                     "Avoid using personal details like your birthday in passwords."
-                    "Consider using a password manager to generate and store strong passwords."
                 }
             },
             {
@@ -62,9 +63,9 @@ namespace CybersecurityBot.GUI
         public MainWindow()
         {
             InitializeComponent();
-            PlayVoiceGreetingWithText();
-
             ChatScrollViewer.ScrollToBottom();
+
+            PlayVoiceGreetingWithText();
         }
 
         private void PlayVoiceGreetingWithText()
@@ -76,9 +77,8 @@ namespace CybersecurityBot.GUI
             }
             catch
             {
-                AddBotMessage("(Voice greeting not available)");
+                // if voice fails, it should continue.
             }
-
 
             AddBotMessage("Hey there. Welcome to the cybersecurity awareness bot.");
             AddBotMessage("I'm your friendly guide here to help you stay safe online.");
@@ -134,12 +134,10 @@ namespace CybersecurityBot.GUI
                 {
                     AddBotMessage("Please enter a valid name.");
                 }
-
                 else
                 {
                     AddBotMessage("I didn't quite understand that. Could you rephrase?");
                 }
-
                 UserInput.Clear();
                 return;
             }
@@ -150,7 +148,7 @@ namespace CybersecurityBot.GUI
 
             string lower = message.ToLower();
 
-
+            // if name is not stored yet, it will store it.
             if (!nameStored)
             {
                 if (string.IsNullOrEmpty(message) || message.Length < 2)
@@ -170,13 +168,11 @@ namespace CybersecurityBot.GUI
 
             await TypingAnimation();
 
-
             if (lower.Contains("what is my name"))
             {
                 AddBotMessage($"Your name is {memory.UserMemory["name"]}.");
                 return;
             }
-
 
             if (lower.Contains("your name") || lower.Contains("who are you"))
             {
@@ -184,19 +180,83 @@ namespace CybersecurityBot.GUI
                 return;
             }
 
-            if(lower == "yes" || lower == "yeah" || lower == "sure" || lower == "ok" || lower == "okay")
+            // yes//no recognition.
+            if (lower == "yes" || lower == "yeah" || lower == "sure" || lower == "ok" || lower == "okay")
             {
                 AddBotMessage("Great! Let's get started. What would you like to learn about?");
-                AddBotMessage("You can ask me about: passwords, privacy, scams or pishing.");
+                AddBotMessage("You can ask me about: passwords, privacy, scams or phishing.");
                 return;
             }
-            else if(lower == "no" || lower == "nope" || lower == "not really" || lower == "nah")
-                {
+            else if (lower == "no" || lower == "nope" || lower == "not really" || lower == "nah")
+            {
                 AddBotMessage("That's okay. Take your time. I'm here whenever you're ready to learn.");
-                AddBotMessage("Just ask me about passwords, privacy, scams or pishing whenever you like.");
+                AddBotMessage("Just ask me about passwords, privacy, scams or phishing whenever you like.");
                 return;
             }
 
+            // this will be the task commands.
+            if (lower.Contains("add task") || lower.Contains("new task") ||
+                lower.Contains("show my tasks") || lower.Contains("view tasks") ||
+                lower.Contains("complete task") || lower.Contains("delete task") ||
+                lower.Contains("remind me in"))
+            {
+                HandleTaskCommand(message);
+                return;
+            }
+
+            // this will be the quiz commands.
+            // when the user wants to start the quiz.
+            if (lower.Contains("start quiz") || lower.Contains("play quiz"))
+            {
+                AddBotMessage(quizManager.StartQuiz());
+                AddBotMessage(quizManager.GetCurrentQuestion());
+                activityLog.Add("Quiz started");  
+                return;
+            }
+
+            // when the user wants to quit the quiz.
+            if (quizManager.IsQuizActive() && lower.Contains("quit"))
+            {
+                AddBotMessage(quizManager.SubmitAnswer("quit"));
+                activityLog.Add("Quiz quit early");  
+                return;
+            }
+
+            // shows if the quiz is active then it will process answers.
+            if (quizManager.IsQuizActive())
+            {
+                string result = quizManager.SubmitAnswer(message);
+                AddBotMessage(result);
+
+                // it will check if quiz just completed.
+                if (result.Contains("complete") || result.Contains("final score"))
+                {
+                    activityLog.Add("Quiz completed");  
+                }
+                return;
+            }
+
+            // this is the activity log.
+            if (lower.Contains("show activity log") || lower.Contains("what have you done for me") ||
+                lower.Contains("show log") || lower.Contains("activity log"))
+            {
+                if (activityLog.Count == 0)
+                {
+                    AddBotMessage("No activity yet. Start a quiz, add a task, or ask me something!");
+                    return;
+                }
+
+                string logMessage = "Here's a summary of recent actions:\n\n";
+                int startIndex = Math.Max(0, activityLog.Count - 10);
+                for (int i = startIndex; i < activityLog.Count; i++)
+                {
+                    logMessage += $"{i + 1}. {activityLog[i]}\n";
+                }
+                AddBotMessage(logMessage);
+                return;
+            }
+
+            // this is the follow up handling.
             if (lower.Contains("tell me more") || lower.Contains("another tip") ||
                 lower.Contains("explain more") || lower.Contains("more tips"))
             {
@@ -213,11 +273,12 @@ namespace CybersecurityBot.GUI
                 return;
             }
 
+            // this is the sentiment detection.
             string sentiment = DetectSentiment(message);
 
             if (sentiment == "worried")
             {
-                AddBotMessage("It's completely understandable to feel that way. Let me share some tips to help you stay safe online.");
+                AddBotMessage("It's completely understandable to feel that way. Let me share some tips to help you stay safe.");
                 return;
             }
             else if (sentiment == "frustrated")
@@ -232,15 +293,16 @@ namespace CybersecurityBot.GUI
             }
             else if (sentiment == "happy")
             {
-                AddBotMessage("I'm glad you're feeling happy! Keep that positive engergy.");
+                AddBotMessage("I'm glad you're feeling happy! Keep that positive energy.");
                 return;
             }
             else if (sentiment == "sad")
             {
                 AddBotMessage("I'm here for you. Let's talk about staying safe online.");
+                return;
             }
 
-
+            // this is the keyword detection.
             bool found = false;
             foreach (var keyword in cyberResponses.Keys)
             {
@@ -256,11 +318,97 @@ namespace CybersecurityBot.GUI
                 }
             }
 
-
+            // the default response of the bot.
             if (!found)
             {
-                AddBotMessage("I didn't quite understand that. Could you rephrase? Try asking about passwords, privacy, scams or phishing.");
+                AddBotMessage("I didn't quite understand that. Could you rephrase? Try asking about passwords, privacy, scams, or phishing.");
             }
+        }
+
+        private void HandleTaskCommand(string message)
+        {
+            string lower = message.ToLower();
+
+            // Add task: "add task - review privacy settings".
+            if (lower.Contains("add task") || lower.Contains("new task"))
+            {
+                string taskTitle = message.Substring(message.IndexOf("-") + 1).Trim();
+                if (string.IsNullOrEmpty(taskTitle))
+                {
+                    AddBotMessage("Please specify a task. Example: 'add task - Enable 2FA'");
+                    return;
+                }
+
+                dbHelper.AddTask(taskTitle, "", null);
+                AddBotMessage($"Task added: '{taskTitle}'. Would you like to set a reminder? (yes/no)");
+                activityLog.Add($"Task added: {taskTitle}");  
+                return;
+            }
+
+            // View tasks: "show my tasks".
+            if (lower.Contains("show my tasks") || lower.Contains("view tasks") || lower.Contains("list tasks"))
+            {
+                var tasks = dbHelper.GetTasks();
+                if (tasks.Count == 0)
+                {
+                    AddBotMessage("You have no tasks. Add one with 'add task - your task'.");
+                    return;
+                }
+
+                string taskList = "Here are your tasks:\n";
+                foreach (var task in tasks)
+                {
+                    string status = task.IsCompleted ? "Completed" : "Pending";
+                    taskList += $"- {task.Title} [{status}]\n";
+                }
+                AddBotMessage(taskList);
+                activityLog.Add("Viewed task list"); 
+                return;
+            }
+
+            // Complete task: "complete task 1".
+            if (lower.Contains("complete task"))
+            {
+                string[] parts = message.Split(' ');
+                if (parts.Length >= 3 && int.TryParse(parts[2], out int taskId))
+                {
+                    dbHelper.CompleteTask(taskId);
+                    AddBotMessage($"Task {taskId} marked as completed!");
+                    activityLog.Add($"Task {taskId} completed"); 
+                }
+                else
+                {
+                    AddBotMessage("Please specify the task ID. Example: 'complete task 1'");
+                }
+                return;
+            }
+
+            // Delete task: "delete task 1".
+            if (lower.Contains("delete task"))
+            {
+                string[] parts = message.Split(' ');
+                if (parts.Length >= 3 && int.TryParse(parts[2], out int taskId))
+                {
+                    dbHelper.DeleteTask(taskId);
+                    AddBotMessage($"Task {taskId} deleted.");
+                    activityLog.Add($"Task {taskId} deleted"); 
+                }
+                else
+                {
+                    AddBotMessage("Please specify the task ID. Example: 'delete task 1'");
+                }
+                return;
+            }
+
+            // Set reminder: "remind me in 3 days".
+            if (lower.Contains("remind me in") || lower.Contains("set reminder"))
+            {
+                AddBotMessage("Reminder set! I'll remind you when it's time.");
+                activityLog.Add("Reminder set");  
+                return;
+            }
+
+            AddBotMessage("I didn't quite understand. Try 'add task - your task' or 'show my tasks'.");
         }
 
 
